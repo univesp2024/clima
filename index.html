@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Projeto Integrador III - Dashboard de Temperatura e Umidade</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;400&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #e0e7ff 0%, #f5f7fa 100%);
+      font-family: 'Montserrat', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+    .dashboard-container {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 40px 20px;
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: 0 8px 32px rgba(60, 120, 200, 0.10), 0 1.5px 6px rgba(80, 80, 80, 0.05);
+    }
+    .dashboard-title {
+      text-align: center;
+      font-size: 2.8rem;
+      font-weight: 700;
+      color: #264b96;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+    .dashboard-subtitle {
+      text-align: center;
+      font-size: 1.2rem;
+      color: #6b7280;
+      margin-bottom: 36px;
+    }
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 32px;
+    }
+    .sensor-card {
+      background: linear-gradient(120deg, #e3f0ff 0%, #f9f9fb 100%);
+      border-radius: 18px;
+      box-shadow: 0 2px 12px rgba(60, 120, 200, 0.08);
+      padding: 32px 24px 24px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: box-shadow 0.2s;
+    }
+    .sensor-card:hover {
+      box-shadow: 0 6px 32px rgba(60, 120, 200, 0.16);
+    }
+    .sensor-id {
+      font-size: 1.1rem;
+      color: #7b8ab8;
+      margin-bottom: 12px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+    .sensor-values {
+      display: flex;
+      gap: 36px;
+      margin: 16px 0 0 0;
+    }
+    .value-block {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .value-icon {
+      font-size: 2.2rem;
+      color: #6eb7ff;
+      margin-bottom: 2px;
+    }
+    .value-label {
+      font-size: 1rem;
+      color: #5a5a5a;
+      font-weight: 500;
+    }
+    .value-number {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #264b96;
+      letter-spacing: 1px;
+    }
+    @media (max-width: 600px) {
+      .dashboard-container {
+        padding: 18px 4px;
+      }
+      .dashboard-title {
+        font-size: 2rem;
+      }
+      .cards-grid {
+        gap: 16px;
+      }
+      .sensor-card {
+        padding: 18px 8px;
+      }
+    }
+  </style>
+
+  <script src="https://kit.fontawesome.com/5eacb6c9e9.js" crossorigin="anonymous"></script>
+</head>
+<body>
+  <div class="dashboard-container">
+    <div class="dashboard-title">Projeto Integrador III - Dashboard</div>
+    <div class="dashboard-subtitle">Monitoramento em tempo real de temperatura e umidade</div>
+    <div class="cards-grid" id="cards-grid">
+      <!-- Cards dos sensores serão inseridos aqui -->
+    </div>
+  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyC8Gp28Ewk2809xwRwVynzJVmTyi-3_NTc",
+      authDomain: "projint25.firebaseapp.com",
+      projectId: "projint25",
+      storageBucket: "projint25.firebasestorage.app",
+      messagingSenderId: "718033608673",
+      appId: "1:718033608673:web:83dddfc8a88e97edc63ca0",
+      measurementId: "G-K6QXDCSRNF"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // IDs dos sensores
+    const sensorIds = ["1", "2", "3"];
+
+    // Função para criar card (apenas na primeira vez)
+    function criarCard(id, municipio, temp, umidade) {
+      const card = document.createElement("div");
+      card.className = "sensor-card";
+      card.id = `sensor-card-${id}`;
+      card.innerHTML = `
+        <div class="sensor-id">Sensor ID: <b>${id}</b></div>
+        <div class="municipio"><b id="municipio-${id}">${municipio}</b></div>
+        <div class="sensor-values">
+          <div class="value-block">
+            <span class="value-icon"><i class="fas fa-thermometer-half"></i></span>
+            <span class="value-label">Temperatura</span>
+            <span class="value-number" id="temp-${id}">${temp} <span style="font-size:1.3rem;color:#7b8ab8;">&#8451;</span></span>
+          </div>
+          <div class="value-block">
+            <span class="value-icon"><i class="fas fa-tint"></i></span>
+            <span class="value-label">Umidade</span>
+            <span class="value-number" id="umidade-${id}">${umidade} <span style="font-size:1.3rem;color:#7b8ab8;">%</span></span>
+          </div>
+        </div>
+      `;
+      document.getElementById("cards-grid").appendChild(card);
+    }
+
+    // Função para atualizar apenas os valores dos cards
+    async function loadSensors() {
+      for (const id of sensorIds) {
+        const docRef = doc(db, "db_temp", id);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+
+          // Se o card não existe, cria
+          if (!document.getElementById(`sensor-card-${id}`)) {
+            criarCard(id, data.municipio, data.temp, data.umidade);
+          } else {
+            // Só atualiza os valores
+            document.getElementById(`municipio-${id}`).innerText = data.municipio;
+            document.getElementById(`temp-${id}`).innerHTML = `${data.temp} <span style="font-size:1.3rem;color:#7b8ab8;">&#8451;</span>`;
+            document.getElementById(`umidade-${id}`).innerHTML = `${data.umidade} <span style="font-size:1.3rem;color:#7b8ab8;">%</span>`;
+          }
+        }
+      }
+    }
+
+    // Carrega ao iniciar
+    loadSensors();
+    // Atualiza a cada 10 segundos
+    setInterval(loadSensors, 10000);
+
+  </script>
+</body>
+</html>
