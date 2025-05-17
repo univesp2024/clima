@@ -19,8 +19,8 @@ DHT dht_sensor(DHT_SENSOR_PIN, DHT_SENSOR_TYPE);
 #define WIFI_PASSWORD "PREENCHER COM A SENHA"
 
 // Configuração do Firestore Database 
-#define API_KEY "AIzaSyC8Gp28Ewk2809xwRwVynzJVmTyi-3_NTc"
-#define DATABASE_URL "projint25.firebaseapp.com" 
+#define API_KEY "*********** preencher *******************"
+#define DATABASE_URL "*********** preencher *******************" 
 
 FirebaseData fbdo;
 FirebaseAuth auth;
