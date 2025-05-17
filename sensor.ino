@@ -5,6 +5,8 @@
 #define DHT_SENSOR_PIN 4
 #define DHT_SENSOR_TYPE DHT11
 
+// https://console.firebase.google.com/u/0/
+
 // *** Preencher com a identificação do município ***
 #define COD_MUN 1
 // **************************************************
